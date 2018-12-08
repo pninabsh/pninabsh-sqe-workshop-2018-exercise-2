@@ -49,9 +49,6 @@ export function findValueToSubstitute(symbolTable, variable){
 export function findValueforPredicate(symbolTable, variable){
     for(let variablesMap of symbolTable){
         if(variablesMap.variable === variable){
-            if(variablesMap.value === '0'){
-                return '';
-            }
             return variablesMap.value;
         }
     }

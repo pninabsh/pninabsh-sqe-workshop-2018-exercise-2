@@ -3,12 +3,23 @@ import {addLineToResult, getElementInArray} from './symbolicSubstitution';
 import {paramValues} from './params';
 import {parseCode} from './code-analyzer';
 
+function handleArrayExpression(binExp, symbolTable, predicate){
+    let valuesArrays = [];
+    for(let arrayElement of binExp.elements){
+        valuesArrays.push(parseSmallExpression(arrayElement, symbolTable, predicate));
+    }
+    return '[' + valuesArrays.join(',') + ']';
+}
+
 function parseSmallExpressionHelp(binExp, symbolTable, predicate){
-    if(binExp.type === 'UpdateExpression'){
+    /*if(binExp.type === 'UpdateExpression'){
         return binExp.prefix ? binExp.operator + '' + binExp.argument.name : binExp.argument.name + '' + binExp.operator;
     }
-    else if(binExp.type === 'UnaryExpression') {
+    else */if(binExp.type === 'UnaryExpression') {
         return binExp.operator + '' + parseSmallExpression(binExp.argument, symbolTable, predicate);
+    }
+    else if(binExp.type === 'ArrayExpression'){
+        return handleArrayExpression(binExp, symbolTable, predicate);
     }
     else{
         return parseSmallExpression(binExp.left, symbolTable, predicate) + ' ' + binExp.operator + ' ' + parseSmallExpression(binExp.right, symbolTable, predicate);
@@ -60,7 +71,7 @@ function handleVariableDeclarator(exp, symbolTable){
 
 function handleExpressionStatement(exp, symbolTable){
     addVariableToSymbolTable(symbolTable, exp.expression.left.name, parseSmallExpression(exp.expression.right, symbolTable, false), false);
-    let assignmentLine = '<div>' + exp.expression.left.name + ' = ' + parseSmallExpression(exp.expression.right, symbolTable, false) + '</div>';
+    let assignmentLine = '<div>' + exp.expression.left.name + ' = ' + parseSmallExpression(exp.expression.right, symbolTable, false) + ';' + '</div>';
     isGlobal(symbolTable, exp.expression.left.name)? addLineToResult(assignmentLine) : '';
 }
 

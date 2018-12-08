@@ -1,5 +1,9 @@
 export let paramValues = [];
 
+export function resetParamValues(){
+    paramValues = [];
+}
+
 export function getParamsValues(paramsString){
     const i = 0;
     if(paramsString.length > 0 && paramsString.charAt(i) === ' '){

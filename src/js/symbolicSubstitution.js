@@ -17,6 +17,7 @@ export function getElementInArray(lineNumber){
 }
 
 export function presentSymbolicSubstitutedFunc(){
+    $('#parsedCode div').html('');
     const ResultsList = $('#parsedCode');
     let content = '';
     $.each(codeResults, function () {

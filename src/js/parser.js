@@ -1,7 +1,7 @@
 import {parseWhileExp} from './whileParser';
-import {parseIfExp, resetIfSymbolicTable} from './ifParser';
+import {parseIfExp} from './ifParser';
 import {generalSymbolicTable, addVariableToSymbolTable, findValueToSubstitue} from './symbolTable';
-import {replaceOneLineWithAnother} from './symbolicSubstitution';
+import {addLineToResult, getElementInArray} from './symbolicSubstitution';
 import {paramValues} from './params';
 
 function parseSmallExpressionHelp(binExp){
@@ -32,6 +32,7 @@ function parseSmallExpression(binExp) {
 }
 
 function handleFunctionDeclaration(exp){
+    addLineToResult('<div>' + getElementInArray(exp.loc.start.line) + '</div>');
     let i = 0;
     for (let param of exp.params) {
         addVariableToSymbolTable(generalSymbolicTable, param.name, paramValues[i], true);
@@ -44,6 +45,7 @@ function handleBlockStatement(exp){
     for(let bodyElement of exp.body) {
         parseExp(bodyElement, false);
     }
+    addLineToResult('<div>' + '}' + '</div>');
 }
 
 function handleVariableDeclaration(exp){
@@ -67,13 +69,12 @@ function handleWhileStatement(exp){
 }
 
 function handleIfStatement(exp, alternate){
-    resetIfSymbolicTable();
     parseIfExp(exp, alternate, generalSymbolicTable);
 }
 
 function handleReturnStatement(exp){
-    let newReturnLine = 'return ' + parseSmallExpression(exp.argument);
-    replaceOneLineWithAnother(exp.loc.start.line, newReturnLine);
+    let newReturnLine = 'return ' + parseSmallExpression(exp.argument) + ';';
+    addLineToResult('<div>' + newReturnLine + '</div>');
 }
 
 function parseExpHelpFunc2(exp, alternate){

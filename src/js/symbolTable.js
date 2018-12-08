@@ -22,6 +22,15 @@ export function findValueToSubstitue(symbolTable, variable){
     return variable;
 }
 
+export function findValueforPredicate(symbolTable, variable){
+    for(let variablesMap of symbolTable){
+        if(variablesMap.variable === variable){
+            return variablesMap.value;
+        }
+    }
+    return variable;
+}
+
 function existsVariable(symbolTable, variable){
     for(let variableValue of symbolTable){
         if(variableValue.variable === variable){

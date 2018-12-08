@@ -2,7 +2,7 @@ import $ from 'jquery';
 import {parseCode} from './code-analyzer';
 import {getParamsValues} from './params';
 import {parseBody} from './parser';
-import {performSymbolicSubstitution} from'./symbolicSubstitution';
+import {performSymbolicSubstitution, presentSymbolicSubstitutedFunc} from'./symbolicSubstitution';
 import {resetSymbolTable} from './symbolTable';
 
 $(document).ready(function () {
@@ -12,8 +12,8 @@ $(document).ready(function () {
         let paramsValue = $('#variablesValues').val();
         getParamsValues(paramsValue);
         let parsedCode = parseCode(codeToParse);
-        $('#parsedCode').val(JSON.stringify(parsedCode, null, 2));
         performSymbolicSubstitution(codeToParse);
         parseBody(parsedCode);
+        presentSymbolicSubstitutedFunc();
     });
 });

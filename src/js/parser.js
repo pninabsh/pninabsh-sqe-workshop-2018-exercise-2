@@ -12,10 +12,7 @@ function handleArrayExpression(binExp, symbolTable, predicate){
 }
 
 function parseSmallExpressionHelp(binExp, symbolTable, predicate){
-    /*if(binExp.type === 'UpdateExpression'){
-        return binExp.prefix ? binExp.operator + '' + binExp.argument.name : binExp.argument.name + '' + binExp.operator;
-    }
-    else */if(binExp.type === 'UnaryExpression') {
+    if(binExp.type === 'UnaryExpression') {
         return binExp.operator + '' + parseSmallExpression(binExp.argument, symbolTable, predicate);
     }
     else if(binExp.type === 'ArrayExpression'){
@@ -34,7 +31,14 @@ function parseSmallExpression(binExp, symbolTable, predicate) {
         return predicate? findValueforPredicate(symbolTable,binExp.name) : findValueToSubstitute(symbolTable,binExp.name);
     }
     else if (binExp.type === 'MemberExpression') {
-        return parseSmallExpression(binExp.object, symbolTable, predicate) + '[' + parseSmallExpression(binExp.property, symbolTable, predicate) + ']';
+        let arrayElement = parseSmallExpression(binExp.object, symbolTable, predicate) + '[' + parseSmallExpression(binExp.property, symbolTable, predicate) + ']';
+        if(arrayElement.indexOf('([') > -1 && arrayElement.indexOf('])') > -1){
+            let arrayVariable = eval((arrayElement.substring(arrayElement.indexOf('['), arrayElement.indexOf(']') + 1)));
+            let arrayIndexString = arrayElement.substring(arrayElement.indexOf(']') + 1);
+            let arrayIndex = eval((arrayIndexString.substring(arrayIndexString.indexOf('[')+1, arrayIndexString.indexOf(']'))));
+            return arrayVariable[arrayIndex];
+        }
+        return arrayElement;
     }
     else{
         return parseSmallExpressionHelp(binExp, symbolTable, predicate);

@@ -88,3 +88,24 @@ describe('Test function if, else if and else statements with 0 in the end of the
         );
     });
 });
+
+describe('Test function with if with arrays substitution and assignment', () => {
+    it('function with if with arrays substitution and assignment', () => {
+        let statementToTest = 'function test(x,y,z){\n' + 'let a = [1,2,3];\n' + 'z[2] = 4;\n' + 'a[0] = 2;\n' + 'if(z[2] + a[0] > 4){\n' + 'return x;\n' + '}\n' + 'return a[0];\n' + '}';
+        resetSymbolTable();
+        resetCodeResults();
+        resetParamValues();
+        performSymbolicSubstitution(statementToTest);
+        getParamsValues('1,2,[1,2,3]');
+        parseBody(parseCode(statementToTest));
+        let resultArray = ['<div>' + 'function test(x,y,z){' + '</div>',
+            '<div>' + 'z[2] = 4;' + '</div>',
+            '<div style="background-color:lightgreen">' + 'if (z[2] + 2 > 4){' + '</div>',
+            '<div>' + 'return x;' + '</div>',
+            '<div>' + '}' + '</div>', '<div>' + 'return 2;' + '</div>', '<div>' + '}' + '</div>'];
+        assert.deepEqual(
+            codeResults,
+            resultArray
+        );
+    });
+});

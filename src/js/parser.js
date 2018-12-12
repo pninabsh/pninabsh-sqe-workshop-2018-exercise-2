@@ -1,4 +1,4 @@
-import {generalSymbolicTable, addVariableToSymbolTable, findValueToSubstitute, findValueforPredicate, isGlobal} from './symbolTable';
+import {addVariableToSymbolTable, findValueToSubstitute, findValueforPredicate, isGlobal, changeArrayValue} from './symbolTable';
 import {addLineToResult, getElementInArray} from './symbolicSubstitution';
 import {paramValues} from './params';
 import {parseCode} from './code-analyzer';
@@ -23,6 +23,17 @@ function parseSmallExpressionHelp(binExp, symbolTable, predicate){
     }
 }
 
+function handleMemberExpression(binExp, symbolTable, predicate){
+    let arrayElement = parseSmallExpression(binExp.object, symbolTable, predicate) + '[' + parseSmallExpression(binExp.property, symbolTable, predicate) + ']';
+    if(arrayElement.indexOf('([') > -1 && arrayElement.indexOf('])') > -1){
+        let arrayVariable = eval((arrayElement.substring(arrayElement.indexOf('['), arrayElement.indexOf(']') + 1)));
+        let arrayIndexString = arrayElement.substring(arrayElement.indexOf(']') + 1);
+        let arrayIndex = eval((arrayIndexString.substring(arrayIndexString.indexOf('[')+1, arrayIndexString.indexOf(']'))));
+        return arrayVariable[arrayIndex];
+    }
+    return arrayElement;
+}
+
 function parseSmallExpression(binExp, symbolTable, predicate) {
     if (binExp.type === 'Literal') {
         return binExp.value + '';
@@ -31,14 +42,7 @@ function parseSmallExpression(binExp, symbolTable, predicate) {
         return predicate? findValueforPredicate(symbolTable,binExp.name) : findValueToSubstitute(symbolTable,binExp.name);
     }
     else if (binExp.type === 'MemberExpression') {
-        let arrayElement = parseSmallExpression(binExp.object, symbolTable, predicate) + '[' + parseSmallExpression(binExp.property, symbolTable, predicate) + ']';
-        if(arrayElement.indexOf('([') > -1 && arrayElement.indexOf('])') > -1){
-            let arrayVariable = eval((arrayElement.substring(arrayElement.indexOf('['), arrayElement.indexOf(']') + 1)));
-            let arrayIndexString = arrayElement.substring(arrayElement.indexOf(']') + 1);
-            let arrayIndex = eval((arrayIndexString.substring(arrayIndexString.indexOf('[')+1, arrayIndexString.indexOf(']'))));
-            return arrayVariable[arrayIndex];
-        }
-        return arrayElement;
+        return handleMemberExpression(binExp, symbolTable, predicate);
     }
     else{
         return parseSmallExpressionHelp(binExp, symbolTable, predicate);
@@ -74,9 +78,20 @@ function handleVariableDeclarator(exp, symbolTable){
 }
 
 function handleExpressionStatement(exp, symbolTable){
-    addVariableToSymbolTable(symbolTable, exp.expression.left.name, parseSmallExpression(exp.expression.right, symbolTable, false), false);
-    let assignmentLine = '<div>' + exp.expression.left.name + ' = ' + parseSmallExpression(exp.expression.right, symbolTable, false) + ';' + '</div>';
-    isGlobal(symbolTable, exp.expression.left.name)? addLineToResult(assignmentLine) : '';
+    //assignment of an array element
+    if(exp.expression.left.type === 'MemberExpression'){
+        let arrayVariableString = exp.expression.left.object.name;
+        let arrayIndexString = exp.expression.left.property.raw;
+        let arrayIndexNumber = eval(arrayIndexString);
+        changeArrayValue(symbolTable, arrayVariableString, arrayIndexNumber, parseSmallExpression(exp.expression.right, symbolTable, false));
+        let assignmentLine = '<div>' + arrayVariableString + '[' + arrayIndexString + ']' + ' = ' + parseSmallExpression(exp.expression.right, symbolTable, false) + ';' + '</div>';
+        isGlobal(symbolTable, arrayVariableString)? addLineToResult(assignmentLine) : '';
+    }
+    else{
+        addVariableToSymbolTable(symbolTable, exp.expression.left.name, parseSmallExpression(exp.expression.right, symbolTable, false), false);
+        let assignmentLine = '<div>' + exp.expression.left.name + ' = ' + parseSmallExpression(exp.expression.right, symbolTable, false) + ';' + '</div>';
+        isGlobal(symbolTable, exp.expression.left.name)? addLineToResult(assignmentLine) : '';
+    }
 }
 
 function handleWhileStatement(exp, symbolTable){
@@ -148,9 +163,6 @@ function parseExp (exp, alternate, symbolTable) {
 
 function parseBody(parsedCode){
     let symbolTable = [];
-    for(let symbol of generalSymbolicTable){
-        symbolTable.push({variable: symbol.variable, value: symbol.value, parameter: symbol.parameter});
-    }
     for(let bodyElement of parsedCode.body){
         parseExp(bodyElement, false, symbolTable);
     }
